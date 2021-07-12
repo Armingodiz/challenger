@@ -11,6 +11,10 @@ import (
 var DataBroker []models.BrokerData
 var DataCache []models.CacheData
 
+func GetData() ([]models.BrokerData, []models.CacheData) {
+	return DataBroker, DataCache
+}
+
 func init() {
 	DataBroker = make([]models.BrokerData, 200)
 	DataCache = make([]models.CacheData, 200)
@@ -58,4 +62,22 @@ func getMinMax(n int) (int, int) {
 	default:
 		return 0, 0
 	}
+}
+
+const charset = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+var seededRand *rand.Rand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
+
+func StringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func getName(length int) string {
+	return StringWithCharset(length, charset)
 }
