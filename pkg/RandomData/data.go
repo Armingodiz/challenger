@@ -1,8 +1,10 @@
 package RandomData
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
+	"io/ioutil"
 	"math/rand"
 	"time"
 )
@@ -13,7 +15,9 @@ const charset = "abcdefghijklmnopqrstuvwxyz" +
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
 
-func GetData() ([]models.BrokerData, []models.CacheData) {
+
+
+func SetData() {
 	DataBroker := make([]models.BrokerData, 0)
 	DataCache := make([]models.CacheData, 0)
 	for i := 0; i < 200; i++ {
@@ -28,7 +32,10 @@ func GetData() ([]models.BrokerData, []models.CacheData) {
 		DataBroker = append(DataBroker, data)
 		DataCache = append(DataCache, models.CacheData{Ip: data.Ip, Mac: getMacAdd()})
 	}
-	return DataBroker, DataCache
+	file, _ := json.MarshalIndent(DataBroker, "", " ")
+	file2, _ := json.MarshalIndent(DataCache, "", " ")
+	_ = ioutil.WriteFile("broker.json", file, 0644)
+	_ = ioutil.WriteFile("cache.json", file2, 0644)
 }
 
 func getMacAdd() string {
