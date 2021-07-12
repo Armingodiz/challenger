@@ -12,15 +12,15 @@ type Broker interface {
 	Consume(chan models.BrokerData)
 }
 type broker struct {
-	InputChannel chan models.BrokerData
+	OutputChannel chan models.BrokerData
 }
 
 var (
 	BrokerObject broker
 )
 
-func (b broker) Consume(inputChannel chan models.BrokerData) {
-	BrokerObject.InputChannel = inputChannel
+func (b broker) Consume(outputChannel chan models.BrokerData) {
+	BrokerObject.OutputChannel = outputChannel
 	r := mux.NewRouter()
 	r.HandleFunc("/broker", consume)
 	log.Fatal(http.ListenAndServe(":8080", r))
@@ -41,5 +41,8 @@ func consume(w http.ResponseWriter, r *http.Request) {
 		Ip:           ip,
 		Port:         port,
 	}
-	BrokerObject.InputChannel <- newInfo
+	r.Write(w)
+	//fmt.Println(newInfo)
+	BrokerObject.OutputChannel <- newInfo
+	//fmt.Println("sent to channel")
 }
