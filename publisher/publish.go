@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"time"
 )
 
 type Users struct {
@@ -20,7 +19,7 @@ type Users struct {
 func main() {
 	dataSet := getData()
 	for i := 0; i < len(dataSet.Users); i++ {
-		time.Sleep(2 * time.Second)
+		//time.Sleep(2 * time.Second)
 		data := url.Values{
 			"user_name":     {dataSet.Users[i].UserName},
 			"id":            {strconv.Itoa(dataSet.Users[i].ID)},
