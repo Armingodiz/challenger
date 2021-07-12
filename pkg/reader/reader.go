@@ -10,6 +10,5 @@ type Reader struct {
 }
 
 func (reader *Reader) StartReading(inputChannel chan models.BrokerData) {
-	reader.Broker.Consume(inputChannel)
+	broker.BrokerObject.Consume(inputChannel)
 }
-
