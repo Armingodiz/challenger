@@ -1,9 +1,11 @@
-package broker
+package main
 
 import (
-	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
+	"encoding/json"
+	"github.com/ArminGodiz/golang-code-challenge/pkg/RandomData"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
+	"time"
 )
 
 func failOnError(err error, msg string) {
@@ -23,15 +25,17 @@ func main() {
 
 	q, err := ch.QueueDeclare(
 		"userInfo", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		false,      // durable
+		false,      // delete when unused
+		false,      // exclusive
+		false,      // no-wait
+		nil,        // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
-	for{
-		body := models.BrokerData{}
+	data,_ := RandomData.GetData()
+	for i := 0; i < 200; i++ {
+		time.Sleep(1 * time.Second)
+		body, err := json.Marshal(data[i])
 		err = ch.Publish(
 			"",     // exchange
 			q.Name, // routing key
@@ -39,14 +43,9 @@ func main() {
 			false,  // immediate
 			amqp.Publishing{
 				ContentType: "text/plain",
-				Body:        []byte(body),
+				Body:        body,
 			})
 		failOnError(err, "Failed to publish a message")
 		log.Printf(" [x] Sent %s", body)
 	}
 }
-
-func createRandomData() models.BrokerData{
-	return models.BrokerData{}
-}
-

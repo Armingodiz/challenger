@@ -7,3 +7,7 @@ type BrokerData struct {
 	Ip           string `json:"ip"`
 	Port         string `json:"port"`
 }
+type CacheData struct {
+	Ip string `json:"ip"`
+	Mac string `json:"mac"`
+}
