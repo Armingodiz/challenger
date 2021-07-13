@@ -103,7 +103,7 @@ func (w *MultiGoroutinesWriter) StartWriting() {
 		make(chan models.CsvData, 200),
 	}
 	for i := 0; i < 4; i++ {
-		go writerWorker(i+1, channels[i], caches[i], w.OutputChannel)
+		go routineWorker(i+1, channels[i], caches[i], w.OutputChannel)
 	}
 	for input := range w.InputChannel {
 		dataType := getTypeData(input)
@@ -112,21 +112,23 @@ func (w *MultiGoroutinesWriter) StartWriting() {
 }
 
 func (w *HighConcurrentWriter) StartWriting() {
-	middleWare := make(chan MiddleWare, 200)
-	for i := 0; i < w.GoRoutinesCapacity; i++ {
+	var middleWares = []chan MiddleWare{
+		make(chan MiddleWare, 200),
+		make(chan MiddleWare, 200),
+		make(chan MiddleWare, 200),
+		make(chan MiddleWare, 200),
+	}
+	for i := 0; i < w.GoRoutinesCapacity-4; i++ {
 		go func() {
 			for data := range w.InputChannel {
-				middleWare <- MiddleWare{Data: convertToString(data), Type: getTypeData(data)}
+				dataType := getTypeData(data)
+				middleWares[dataType-1] <- MiddleWare{Data: convertToString(data), Type: dataType}
 			}
 		}()
 	}
-	for i := 0; i < 4; i++ {
-		go func() {
-		}()
-	}
 	caches := make(map[int]WritingCache)
-	for converted := range middleWare {
-		manageCaches(caches, w.OutputChannel, converted.Type, converted.Data)
+	for i := 0; i < 4; i++ {
+		go writerWorker(middleWares[i], caches[i], w.OutputChannel)
 	}
 }
 
@@ -160,13 +162,13 @@ func getTypeData(data models.CsvData) int {
 func getPath(dataType int) string {
 	switch dataType {
 	case 1:
-		return "0_100.csv"
+		return "output/0_100.csv"
 	case 2:
-		return "101_500.csv"
+		return "output/101_500.csv"
 	case 3:
-		return "501_1000.csv"
+		return "output/501_1000.csv"
 	case 4:
-		return "1001_1500.csv"
+		return "output/1001_1500.csv"
 	default:
 		return ""
 	}
@@ -196,12 +198,23 @@ func WriteToFile(cache WritingCache, path string) {
 		panic(err)
 	}
 }
-func writerWorker(number int, inp chan models.CsvData, cache WritingCache, out chan []string) {
+func routineWorker(number int, inp chan models.CsvData, cache WritingCache, out chan []string) {
 	for input := range inp {
 		//fmt.Println("fadssdfaadfsfadsadsf")
 		cache = append(cache, convertToString(input))
 		if len(cache) >= 5 {
 			WriteToFile(cache, getPath(number))
+			out <- cache
+			cache = *new(WritingCache)
+		}
+	}
+}
+
+func writerWorker(inp chan MiddleWare, cache WritingCache, out chan []string) {
+	for input := range inp {
+		cache = append(cache, input.Data)
+		if len(cache) >= 5 {
+			WriteToFile(cache, getPath(input.Type))
 			out <- cache
 			cache = *new(WritingCache)
 		}
