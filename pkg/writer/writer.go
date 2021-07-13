@@ -1,0 +1,128 @@
+package writer
+
+import (
+	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
+	"strconv"
+)
+
+type WriterInterface interface {
+	StartWriting()
+}
+
+type MiddleWare struct {
+	Data models.CsvData
+	Type int
+}
+type writingCache []string
+
+// SequentialWriter There is 0 goRoutines and we write without using any goRoutine
+type SequentialWriter struct {
+	InputChannel  chan models.CsvData
+	OutputChannel chan models.CsvData
+}
+
+// ConcurrentWriter there is 1_3 goRoutines and we use them to convert struct to string
+type ConcurrentWriter struct {
+	GoRoutinesCapacity int
+	InputChannel       chan models.CsvData
+	OutputChannel      chan models.CsvData
+}
+
+// MultiGoroutinesWriter count of  goRoutines ==4, we set a goRoutine for each file(converting and writing will be done in GoRoutine)
+type MultiGoroutinesWriter struct {
+	InputChannel  chan models.CsvData
+	OutputChannel chan models.CsvData
+}
+
+// HighConcurrentWriter count of  goRoutines >=8 , we set a goRoutine for each file(just for writing) and other goRoutines will be used as worker pool for
+// converting struct to string
+type HighConcurrentWriter struct {
+	GoRoutinesCapacity int
+	InputChannel       chan models.CsvData
+	OutputChannel      chan models.CsvData
+}
+
+func GetNewWriter(goRoutinesCapacity int, inputChannel chan models.CsvData, outputChannel chan models.CsvData) WriterInterface {
+	if goRoutinesCapacity == 0 {
+		return &SequentialWriter{
+			InputChannel:  inputChannel,
+			OutputChannel: outputChannel,
+		}
+	} else if goRoutinesCapacity > 0 && goRoutinesCapacity < 4 {
+		return &ConcurrentWriter{
+			GoRoutinesCapacity: goRoutinesCapacity,
+			InputChannel:       inputChannel,
+			OutputChannel:      outputChannel,
+		}
+	} else if goRoutinesCapacity == 4 {
+		return &MultiGoroutinesWriter{
+			InputChannel:  inputChannel,
+			OutputChannel: outputChannel,
+		}
+	} else if goRoutinesCapacity >= 8 {
+		return &HighConcurrentWriter{
+			GoRoutinesCapacity: goRoutinesCapacity,
+			InputChannel:       inputChannel,
+			OutputChannel:      outputChannel,
+		}
+	} else {
+		return nil
+	}
+}
+func (w *SequentialWriter) StartWriting() {
+	caches := make(map[int]writingCache)
+	for input := range w.InputChannel {
+		dataType := getTypeData(input)
+		caches[dataType-1] = append(caches[dataType-1], convertToString(input))
+		for i := 0; i < 4; i++ {
+			if len(caches[i]) >= 5 {
+				writeToFile(caches[i], getPath(dataType))
+			}
+		}
+	}
+}
+func (w *ConcurrentWriter) StartWriting() {
+
+}
+
+func (w *MultiGoroutinesWriter) StartWriting() {
+	for input := range w.InputChannel {
+	}
+}
+
+func (w *HighConcurrentWriter) StartWriting() {
+	for input := range w.InputChannel {
+	}
+}
+
+func convertToString(data models.CsvData) string {
+	return data.BrokerInfo.UserName + "|" + strconv.Itoa(data.BrokerInfo.ID) + "|" + strconv.Itoa(data.BrokerInfo.TrafficUsage) + "|" + data.BrokerInfo.Ip + "|" + data.BrokerInfo.Port + "|" + data.Mac
+}
+
+func getTypeData(data models.CsvData) int {
+	if data.BrokerInfo.TrafficUsage >= 0 && data.BrokerInfo.TrafficUsage <= 100 {
+		return 1
+	} else if data.BrokerInfo.TrafficUsage >= 101 && data.BrokerInfo.TrafficUsage <= 500 {
+		return 2
+	} else if data.BrokerInfo.TrafficUsage >= 501 && data.BrokerInfo.TrafficUsage <= 1000 {
+		return 3
+	} else if data.BrokerInfo.TrafficUsage >= 1001 && data.BrokerInfo.TrafficUsage <= 1500 {
+		return 4
+	} else {
+		return 0
+	}
+}
+func getPath(dataType int) string {
+	switch dataType {
+	case 1:
+		return "0_100.csv"
+	case 2:
+		return "101_500.csv"
+	case 3:
+		return "501_1000.csv"
+	case 4:
+		return "1001_1500.csv"
+	default:
+		return ""
+	}
+}
