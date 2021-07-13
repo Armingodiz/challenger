@@ -15,8 +15,6 @@ const charset = "abcdefghijklmnopqrstuvwxyz" +
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
 
-
-
 func SetData() {
 	DataBroker := make([]models.BrokerData, 0)
 	DataCache := make([]models.CacheData, 0)
@@ -47,7 +45,7 @@ func getMacAdd() string {
 	}
 	// Set the local bit
 	buf[0] |= 2
-	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5])
+	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5])
 }
 
 func genIpAddr() string {

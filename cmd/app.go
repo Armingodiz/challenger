@@ -9,16 +9,19 @@ import (
 )
 
 func StartApplication() {
+	redisPort := 8282
 	brokerChannel := make(chan models.BrokerData, 200)
 	combinerChannel := make(chan models.CsvData, 200)
-	writerChannel := make(chan models.CsvData, 200)
+	writerChannel := make(chan []string, 200)
 	reader := &pkgReader.Reader{}
 	combiner := pkgCombiner.GetCombiner(4, brokerChannel, combinerChannel)
-	writer := pkgWriter.GetNewWriter(2, combinerChannel, writerChannel)
+	writer := pkgWriter.GetNewWriter(9, combinerChannel, writerChannel)
 	go reader.StartReading(brokerChannel)
-	go combiner.StartCombining()
+	go combiner.StartCombining(redisPort)
 	go writer.StartWriting()
 	for result := range writerChannel {
-		fmt.Println(result)
+		if result != nil {
+			fmt.Println("part written on file")
+		}
 	}
 }

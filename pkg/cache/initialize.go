@@ -25,7 +25,6 @@ func (c *cacheClient) InitializeCache(port int) error {
 			return err
 		}
 	}
-	fmt.Println(c.Get("156.193.126.24"))
 	return nil
 }
 

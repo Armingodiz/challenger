@@ -20,8 +20,8 @@ func GetCombiner(goRoutinesCap int, inputChannel chan models.BrokerData, outputC
 	}
 }
 
-func (combiner *Combiner) StartCombining() {
-	pkgCache.SetCacheClient(8282)
+func (combiner *Combiner) StartCombining(port int) {
+	pkgCache.SetCacheClient(port)
 	combiner.Cache = pkgCache.CacheObject
 	for i := 0; i < combiner.GoRoutinesCapacity; i++ {
 		go func() {
