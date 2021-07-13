@@ -1,0 +1,4 @@
+{
+  "goroutines_count": 10,
+  "redis_port": 8282
+}
