@@ -51,18 +51,18 @@ func GetNewWriter(goRoutinesCapacity int, inputChannel chan models.CsvData, outp
 			InputChannel:  inputChannel,
 			OutputChannel: outputChannel,
 		}
-	} else if goRoutinesCapacity > 0 && goRoutinesCapacity < 4 {
+	} else if goRoutinesCapacity > 0 && goRoutinesCapacity < 5 {
 		return &ConcurrentWriter{
 			GoRoutinesCapacity: goRoutinesCapacity,
 			InputChannel:       inputChannel,
 			OutputChannel:      outputChannel,
 		}
-	} else if goRoutinesCapacity == 4 {
+	} else if goRoutinesCapacity == 5 {
 		return &MultiGoroutinesWriter{
 			InputChannel:  inputChannel,
 			OutputChannel: outputChannel,
 		}
-	} else if goRoutinesCapacity >= 8 {
+	} else if goRoutinesCapacity >= 9 {
 		return &HighConcurrentWriter{
 			GoRoutinesCapacity: goRoutinesCapacity,
 			InputChannel:       inputChannel,
@@ -95,17 +95,39 @@ func (w *ConcurrentWriter) StartWriting() {
 }
 
 func (w *MultiGoroutinesWriter) StartWriting() {
+	caches := make(map[int]WritingCache)
+	var channels = []chan models.CsvData{
+		make(chan models.CsvData, 200),
+		make(chan models.CsvData, 200),
+		make(chan models.CsvData, 200),
+		make(chan models.CsvData, 200),
+	}
 	for i := 0; i < 4; i++ {
-		go func() {
-			caches := make(map[int]WritingCache)
-			for input := range w.InputChannel {
-				manageCaches(caches, w.OutputChannel, getTypeData(input), convertToString(input))
-			}
-		}()
+		go writerWorker(i+1, channels[i], caches[i], w.OutputChannel)
+	}
+	for input := range w.InputChannel {
+		dataType := getTypeData(input)
+		channels[dataType-1] <- input
 	}
 }
 
 func (w *HighConcurrentWriter) StartWriting() {
+	middleWare := make(chan MiddleWare, 200)
+	for i := 0; i < w.GoRoutinesCapacity; i++ {
+		go func() {
+			for data := range w.InputChannel {
+				middleWare <- MiddleWare{Data: convertToString(data), Type: getTypeData(data)}
+			}
+		}()
+	}
+	for i := 0; i < 4; i++ {
+		go func() {
+		}()
+	}
+	caches := make(map[int]WritingCache)
+	for converted := range middleWare {
+		manageCaches(caches, w.OutputChannel, converted.Type, converted.Data)
+	}
 }
 
 func convertToString(data models.CsvData) string {
@@ -172,5 +194,16 @@ func WriteToFile(cache WritingCache, path string) {
 	err = f.Sync()
 	if err != nil {
 		panic(err)
+	}
+}
+func writerWorker(number int, inp chan models.CsvData, cache WritingCache, out chan []string) {
+	for input := range inp {
+		//fmt.Println("fadssdfaadfsfadsadsf")
+		cache = append(cache, convertToString(input))
+		if len(cache) >= 5 {
+			WriteToFile(cache, getPath(number))
+			out <- cache
+			cache = *new(WritingCache)
+		}
 	}
 }
