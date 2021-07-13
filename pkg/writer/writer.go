@@ -95,6 +95,14 @@ func (w *ConcurrentWriter) StartWriting() {
 }
 
 func (w *MultiGoroutinesWriter) StartWriting() {
+	for i := 0; i < 4; i++ {
+		go func() {
+			caches := make(map[int]WritingCache)
+			for input := range w.InputChannel {
+				manageCaches(caches, w.OutputChannel, getTypeData(input), convertToString(input))
+			}
+		}()
+	}
 }
 
 func (w *HighConcurrentWriter) StartWriting() {
