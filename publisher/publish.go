@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ArminGodiz/golang-code-challenge/cmd"
 	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
 	"io/ioutil"
 	"log"
@@ -27,8 +28,9 @@ func main() {
 			"ip":            {dataSet.Users[i].Ip},
 			"port":          {dataSet.Users[i].Port},
 		}
-		_, err := http.PostForm("http://localhost:8080/broker", data)
-		fmt.Print(data);fmt.Println("    == > sent")
+		_, err := http.PostForm("http://localhost:"+strconv.Itoa(cmd.GetConfig().BrokerPort)+"/broker", data)
+		fmt.Print(data)
+		fmt.Println("    == > sent")
 		if err != nil {
 			log.Fatal(err)
 		}

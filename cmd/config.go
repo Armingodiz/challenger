@@ -8,6 +8,7 @@ import (
 type Config struct {
 	GoroutinesCount int `json:"goroutines_count"`
 	RedisPort       int `json:"redis_port"`
+	BrokerPort      int `json:"broker_port"`
 }
 
 func GetConfig() Config {

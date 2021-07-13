@@ -9,7 +9,7 @@ import (
 )
 
 type Broker interface {
-	Consume(chan models.BrokerData)
+	Consume(chan models.BrokerData, int)
 }
 type broker struct {
 	OutputChannel chan models.BrokerData
@@ -19,11 +19,11 @@ var (
 	BrokerObject broker
 )
 
-func (b broker) Consume(outputChannel chan models.BrokerData) {
+func (b broker) Consume(outputChannel chan models.BrokerData, port int) {
 	BrokerObject.OutputChannel = outputChannel
 	r := mux.NewRouter()
 	r.HandleFunc("/broker", consume)
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), r))
 }
 
 func consume(w http.ResponseWriter, r *http.Request) {

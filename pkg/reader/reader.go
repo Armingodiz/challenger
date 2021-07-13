@@ -9,6 +9,6 @@ type Reader struct {
 	Broker broker.Broker
 }
 
-func (reader *Reader) StartReading(inputChannel chan models.BrokerData) {
-	broker.BrokerObject.Consume(inputChannel)
+func (reader *Reader) StartReading(inputChannel chan models.BrokerData, port int) {
+	broker.BrokerObject.Consume(inputChannel, port)
 }

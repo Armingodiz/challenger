@@ -23,7 +23,7 @@ func StartApplication() {
 	combiner := pkgCombiner.GetCombiner(combinerRoutines, brokerChannel, combinerChannel)
 	writer := pkgWriter.GetNewWriter(writerRoutines, combinerChannel, writerChannel)
 	//start each part in go routine
-	go reader.StartReading(brokerChannel)
+	go reader.StartReading(brokerChannel, config.BrokerPort)
 	go combiner.StartCombining(redisPort)
 	go writer.StartWriting()
 	//waiting in main goRoutine for response from last part(writer)

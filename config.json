@@ -1,4 +1,5 @@
 {
   "goroutines_count": 10,
-  "redis_port": 8282
+  "redis_port": 8282,
+  "broker_port": 8080
 }
