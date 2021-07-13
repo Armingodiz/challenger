@@ -13,7 +13,7 @@ type WriterInterface interface {
 }
 
 type MiddleWare struct {
-	Data models.CsvData
+	Data string
 	Type int
 }
 type WritingCache []string
@@ -75,20 +75,23 @@ func GetNewWriter(goRoutinesCapacity int, inputChannel chan models.CsvData, outp
 func (w *SequentialWriter) StartWriting() {
 	caches := make(map[int]WritingCache)
 	for input := range w.InputChannel {
-		dataType := getTypeData(input)
-		caches[dataType-1] = append(caches[dataType-1], convertToString(input))
-		for i := 0; i < 4; i++ {
-			if len(caches[i]) >= 5 {
-				WriteToFile(caches[i], getPath(dataType))
-				w.OutputChannel <- caches[i]
-				caches[i] = *new(WritingCache)
-			}
-		}
+		manageCaches(caches, w.OutputChannel, getTypeData(input), convertToString(input))
 	}
 }
 
 func (w *ConcurrentWriter) StartWriting() {
-
+	middleWare := make(chan MiddleWare, 200)
+	for i := 0; i < w.GoRoutinesCapacity; i++ {
+		go func() {
+			for data := range w.InputChannel {
+				middleWare <- MiddleWare{Data: convertToString(data), Type: getTypeData(data)}
+			}
+		}()
+	}
+	caches := make(map[int]WritingCache)
+	for converted := range middleWare {
+		manageCaches(caches, w.OutputChannel, converted.Type, converted.Data)
+	}
 }
 
 func (w *MultiGoroutinesWriter) StartWriting() {
@@ -99,6 +102,16 @@ func (w *HighConcurrentWriter) StartWriting() {
 
 func convertToString(data models.CsvData) string {
 	return data.BrokerInfo.UserName + "|" + strconv.Itoa(data.BrokerInfo.ID) + "|" + strconv.Itoa(data.BrokerInfo.TrafficUsage) + "|" + data.BrokerInfo.Ip + "|" + data.BrokerInfo.Port + "|" + data.Mac
+}
+func manageCaches(caches map[int]WritingCache, out chan []string, dataType int, data string) {
+	caches[dataType-1] = append(caches[dataType-1], data)
+	for i := 0; i < 4; i++ {
+		if len(caches[i]) >= 5 {
+			WriteToFile(caches[i], getPath(i+1))
+			out <- caches[i]
+			caches[i] = *new(WritingCache)
+		}
+	}
 }
 
 func getTypeData(data models.CsvData) int {
