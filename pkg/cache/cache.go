@@ -19,7 +19,7 @@ type cacheClient struct {
 	Client *redis.Client
 }
 
-var CacheObject CacheInterface
+var Object CacheInterface
 
 func SetCacheClient(port int) {
 	addr := "localhost:" + strconv.Itoa(port)
@@ -30,22 +30,22 @@ func SetCacheClient(port int) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	CacheObject = &cacheClient{Client: redisClient}
-	err2 := CacheObject.InitializeCache(port)
+	Object = &cacheClient{Client: redisClient}
+	err2 := Object.InitializeCache(port)
 	if err2 != nil {
 		panic(err2)
 	}
 }
 
 func (c *cacheClient) Get(key string) string {
-	/*value, err := c.Client.Get(context.Background(), key).Result()
+	value, err := c.Client.Get(context.Background(), key).Result()
 	if err != nil {
 		panic(err)
-	}*/
-	return macMap[key]
+	}
+	return value
 }
 
 func (c *cacheClient) Set(ipMac models.CacheData) error {
-	err := c.Client.Set(context.Background(), ipMac.Ip, ipMac.Mac, time.Second).Err()
+	err := c.Client.Set(context.Background(), ipMac.Ip, ipMac.Mac, time.Hour).Err()
 	return err
 }

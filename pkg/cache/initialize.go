@@ -8,18 +8,14 @@ import (
 	"os"
 )
 
-var macMap map[string]string
-
 type Macs struct {
 	Macs []models.CacheData `json:"macs"`
 }
 
 func (c *cacheClient) InitializeCache(port int) error {
 	macs := getData().Macs
-	macMap = make(map[string]string)
 	//fmt.Println(macs)
 	for i := 0; i < len(macs); i++ {
-		macMap[macs[i].Ip] = macs[i].Mac
 		err := c.Set(macs[i])
 		if err != nil {
 			return err
