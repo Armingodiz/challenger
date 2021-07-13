@@ -1,7 +1,10 @@
 package writer
 
 import (
+	"encoding/csv"
 	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
+	"log"
+	"os"
 	"strconv"
 )
 
@@ -13,25 +16,25 @@ type MiddleWare struct {
 	Data models.CsvData
 	Type int
 }
-type writingCache []string
+type WritingCache []string
 
 // SequentialWriter There is 0 goRoutines and we write without using any goRoutine
 type SequentialWriter struct {
 	InputChannel  chan models.CsvData
-	OutputChannel chan models.CsvData
+	OutputChannel chan []string
 }
 
 // ConcurrentWriter there is 1_3 goRoutines and we use them to convert struct to string
 type ConcurrentWriter struct {
 	GoRoutinesCapacity int
 	InputChannel       chan models.CsvData
-	OutputChannel      chan models.CsvData
+	OutputChannel      chan []string
 }
 
 // MultiGoroutinesWriter count of  goRoutines ==4, we set a goRoutine for each file(converting and writing will be done in GoRoutine)
 type MultiGoroutinesWriter struct {
 	InputChannel  chan models.CsvData
-	OutputChannel chan models.CsvData
+	OutputChannel chan []string
 }
 
 // HighConcurrentWriter count of  goRoutines >=8 , we set a goRoutine for each file(just for writing) and other goRoutines will be used as worker pool for
@@ -39,10 +42,10 @@ type MultiGoroutinesWriter struct {
 type HighConcurrentWriter struct {
 	GoRoutinesCapacity int
 	InputChannel       chan models.CsvData
-	OutputChannel      chan models.CsvData
+	OutputChannel      chan []string
 }
 
-func GetNewWriter(goRoutinesCapacity int, inputChannel chan models.CsvData, outputChannel chan models.CsvData) WriterInterface {
+func GetNewWriter(goRoutinesCapacity int, inputChannel chan models.CsvData, outputChannel chan []string) WriterInterface {
 	if goRoutinesCapacity == 0 {
 		return &SequentialWriter{
 			InputChannel:  inputChannel,
@@ -70,29 +73,28 @@ func GetNewWriter(goRoutinesCapacity int, inputChannel chan models.CsvData, outp
 	}
 }
 func (w *SequentialWriter) StartWriting() {
-	caches := make(map[int]writingCache)
+	caches := make(map[int]WritingCache)
 	for input := range w.InputChannel {
 		dataType := getTypeData(input)
 		caches[dataType-1] = append(caches[dataType-1], convertToString(input))
 		for i := 0; i < 4; i++ {
 			if len(caches[i]) >= 5 {
-				writeToFile(caches[i], getPath(dataType))
+				WriteToFile(caches[i], getPath(dataType))
+				w.OutputChannel <- caches[i]
+				caches[i] = *new(WritingCache)
 			}
 		}
 	}
 }
+
 func (w *ConcurrentWriter) StartWriting() {
 
 }
 
 func (w *MultiGoroutinesWriter) StartWriting() {
-	for input := range w.InputChannel {
-	}
 }
 
 func (w *HighConcurrentWriter) StartWriting() {
-	for input := range w.InputChannel {
-	}
 }
 
 func convertToString(data models.CsvData) string {
@@ -124,5 +126,30 @@ func getPath(dataType int) string {
 		return "1001_1500.csv"
 	default:
 		return ""
+	}
+}
+
+func WriteToFile(cache WritingCache, path string) {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	defer f.Close()
+	if err != nil {
+		log.Fatalln("failed to open or create file", err)
+	}
+	w := csv.NewWriter(f)
+	for _, record := range cache {
+		data := make([]string, 1)
+		data[0] = record
+		if err := w.Write(data); err != nil {
+			log.Fatalln("error writing record to file", err)
+		}
+	}
+	w.Flush()
+	err = w.Error()
+	if err != nil {
+		panic(err)
+	}
+	err = f.Sync()
+	if err != nil {
+		panic(err)
 	}
 }
