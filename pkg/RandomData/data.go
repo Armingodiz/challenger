@@ -15,10 +15,17 @@ const charset = "abcdefghijklmnopqrstuvwxyz" +
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
 
-func SetData() {
+type UsersInfo struct {
+	Users []models.BrokerData `json:"users"`
+}
+type MacInfo struct {
+	Macs []models.CacheData `json:"macs"`
+}
+
+func SetData(count int) {
 	DataBroker := make([]models.BrokerData, 0)
 	DataCache := make([]models.CacheData, 0)
-	for i := 0; i < 200; i++ {
+	for i := 0; i < count; i++ {
 		min, max := getMinMax(i % 4)
 		data := models.BrokerData{
 			UserName:     getName(4),
@@ -30,10 +37,12 @@ func SetData() {
 		DataBroker = append(DataBroker, data)
 		DataCache = append(DataCache, models.CacheData{Ip: data.Ip, Mac: getMacAdd()})
 	}
-	file, _ := json.MarshalIndent(DataBroker, "", " ")
-	file2, _ := json.MarshalIndent(DataCache, "", " ")
-	_ = ioutil.WriteFile("broker.json", file, 0644)
-	_ = ioutil.WriteFile("cache.json", file2, 0644)
+	users := UsersInfo{DataBroker}
+	macs := MacInfo{DataCache}
+	file, _ := json.MarshalIndent(users, "", " ")
+	file2, _ := json.MarshalIndent(macs, "", " ")
+	_ = ioutil.WriteFile("publisher/broker.json", file, 0644)
+	_ = ioutil.WriteFile("pkg/cache/cache.json", file2, 0644)
 }
 
 func getMacAdd() string {

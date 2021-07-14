@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/ArminGodiz/golang-code-challenge/pkg/RandomData"
 	pkgCombiner "github.com/ArminGodiz/golang-code-challenge/pkg/combiner"
 	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
 	pkgReader "github.com/ArminGodiz/golang-code-challenge/pkg/reader"
@@ -16,10 +17,12 @@ func StartApplication() {
 	redisPort := config.RedisPort
 	goroutinesCount := config.GoroutinesCount
 	combinerRoutines, writerRoutines := setGoroutines(goroutinesCount)
+	//set random data for broker and cache
+	RandomData.SetData(config.DataCount)
 	//create channels
-	brokerChannel := make(chan models.BrokerData, 200)
-	combinerChannel := make(chan models.CsvData, 200)
-	writerChannel := make(chan []string, 200)
+	brokerChannel := make(chan models.BrokerData, 100000)
+	combinerChannel := make(chan models.CsvData, 100000)
+	writerChannel := make(chan []string, 20000)
 	//create each part
 	reader := &pkgReader.Reader{}
 	combiner := pkgCombiner.GetCombiner(combinerRoutines, brokerChannel, combinerChannel)

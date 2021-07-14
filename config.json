@@ -1,5 +1,6 @@
 {
   "goroutines_count": 10,
   "redis_port": 8282,
-  "broker_port": 8080
+  "broker_port": 8080,
+  "data_count" : 500
 }
