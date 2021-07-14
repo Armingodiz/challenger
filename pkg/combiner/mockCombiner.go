@@ -5,29 +5,15 @@ import (
 	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
 )
 
-type CombinerInterface interface {
-	StartCombining(port int)
-}
-
-type Combiner struct {
+type CombinerMock struct {
 	GoRoutinesCapacity int
 	InputChannel       chan models.BrokerData
 	OutputChannel      chan models.CsvData
 	Cache              pkgCache.CacheInterface
 }
 
-
-func GetCombiner(goRoutinesCap int, inputChannel chan models.BrokerData, outputChannel chan models.CsvData) *Combiner {
-	return &Combiner{
-		GoRoutinesCapacity: goRoutinesCap,
-		InputChannel:       inputChannel,
-		OutputChannel:      outputChannel,
-	}
-}
-
-func (combiner *Combiner) StartCombining(port int) {
-	pkgCache.SetCacheClient(port)
-	combiner.Cache = pkgCache.Object
+func (combiner *CombinerMock) StartCombining(port int) {
+	combiner.Cache = pkgCache.GetMockCache()
 	for i := 0; i < combiner.GoRoutinesCapacity; i++ {
 		go func() {
 			for brokerData := range combiner.InputChannel {
@@ -38,5 +24,3 @@ func (combiner *Combiner) StartCombining(port int) {
 		}()
 	}
 }
-
-
