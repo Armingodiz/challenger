@@ -1,12 +1,22 @@
 package combiner
 
 import (
-	"fmt"
 	pkgCache "github.com/ArminGodiz/golang-code-challenge/pkg/cache"
 	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
 )
 
+type CombinerInterface interface {
+	StartCombining(port int)
+}
+
 type Combiner struct {
+	GoRoutinesCapacity int
+	InputChannel       chan models.BrokerData
+	OutputChannel      chan models.CsvData
+	Cache              pkgCache.CacheInterface
+}
+
+type CombinerMock struct {
 	GoRoutinesCapacity int
 	InputChannel       chan models.BrokerData
 	OutputChannel      chan models.CsvData
@@ -28,9 +38,19 @@ func (combiner *Combiner) StartCombining(port int) {
 		go func() {
 			for brokerData := range combiner.InputChannel {
 				//time.Sleep(3 * time.Second)
-				fmt.Print("#")
-				fmt.Print(brokerData.Ip)
-				fmt.Println("#")
+				mac := combiner.Cache.Get(brokerData.Ip)
+				combiner.OutputChannel <- models.CsvData{BrokerInfo: brokerData, Mac: mac}
+			}
+		}()
+	}
+}
+
+func (combiner *CombinerMock) StartCombining(port int) {
+	combiner.Cache = pkgCache.GetMockCache()
+	for i := 0; i < combiner.GoRoutinesCapacity; i++ {
+		go func() {
+			for brokerData := range combiner.InputChannel {
+				//time.Sleep(3 * time.Second)
 				mac := combiner.Cache.Get(brokerData.Ip)
 				combiner.OutputChannel <- models.CsvData{BrokerInfo: brokerData, Mac: mac}
 			}
