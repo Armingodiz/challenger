@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	pkgCombiner "github.com/ArminGodiz/golang-code-challenge/pkg/combiner"
 	"github.com/ArminGodiz/golang-code-challenge/pkg/models"
@@ -9,8 +10,9 @@ import (
 )
 
 func StartApplication() {
-	//set config
+	//set and validate config
 	config := GetConfig()
+	config.ValidateConfig()
 	redisPort := config.RedisPort
 	goroutinesCount := config.GoroutinesCount
 	combinerRoutines, writerRoutines := setGoroutines(goroutinesCount)
@@ -38,6 +40,15 @@ func setGoroutines(count int) (int, int) {
 	if (count-1)%2 == 0 {
 		return (count - 1) / 2, (count - 1) / 2
 	} else {
-		return (count)/2 - 1, count / 2
+		return (count) / 2, (count / 2) - 1
+	}
+}
+func (conf Config) ValidateConfig() {
+	if conf.BrokerPort >= 65536 {
+		panic(errors.New("invalid broker port"))
+	} else if conf.RedisPort >= 65536 {
+		panic(errors.New("invalid redis port"))
+	} else if conf.GoroutinesCount < 2 {
+		panic(errors.New("minimum value for goroutines count is 2"))
 	}
 }
