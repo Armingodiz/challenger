@@ -21,3 +21,8 @@ name     | repo
 
 
 3) Go to publisher package and run `go run publish.go` (to start the publisher for broker).
+
+## Testing each part
+You can go to each package and run `go test` to test that specefic part,
+
+also there is an integration test in cmd package which check connection between different parts.
