@@ -11,12 +11,13 @@ name     | repo
  
 ## Usage
 
-Use `docker run --name redis-usdb -p "yourPort":6379 -d redis` to connect redis to port "yourPort".
+1) Use `docker run --name redis-usdb -p "yourPort":6379 -d redis` to connect redis to port "yourPort".
 
-("yourPort" is set to 8282 by default, but if you want to change it, change redisPort in config.json)
+      ("yourPort" is set to 8282 by default, but if you want to change it, change redisPort in config.json)
 
-Broker will be use port 8080 by default, to change it go to file config.json.
+      Broker will be use port 8080 by default, to change it go to file config.json.
 
-build and run **main.go** file(`go run main.go`) to start the app.
+2) build and run **main.go** file(`go run main.go`) to start the app.
 
-Then we need to run publish.go. Go to publisher package and run `go run publish.go` (to start the publisher for broker).
+
+3) Go to publisher package and run `go run publish.go` (to start the publisher for broker).
