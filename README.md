@@ -1,5 +1,5 @@
-# golang-code-challenge
-
+# challenger
+Simple program to gain more experience in go concurrency and also publish/consume pattern
 
 ## Dependencies
 You must have [go](https://golang.org/doc/install) and [Docker](https://www.docker.com/) installed on your machine
